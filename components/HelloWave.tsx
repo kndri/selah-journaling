@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { fonts } from '@/constants/fonts';
 
 export function HelloWave() {
   const rotationAnimation = useSharedValue(0);
@@ -34,4 +35,12 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     marginTop: -6,
   },
+  heading: {
+    fontFamily: fonts.acornBold,
+    fontSize: 32,
+  },
+  subtitle: {
+    fontFamily: fonts.manropeMedium,
+    fontSize: 18,
+  }
 });

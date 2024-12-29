@@ -58,3 +58,19 @@ Join our community of developers creating universal apps.
    - `EXPO_PUBLIC_OPENAI_API_KEY`: Your OpenAI API key
 
 Note: Never commit `.env` file to version control
+
+## TODO
+
+### User Experience
+- [ ] Add Toast notifications
+  - [ ] Show success message after reflection creation
+  - [ ] Display error messages with retry options
+  - [ ] Add loading states during processing
+  - [ ] Implement proper error handling feedback
+
+### Future Features
+- [ ] Audio Storage
+  - Save audio recordings alongside transcriptions
+  - Allow playback of past recordings
+  - Support multiple recordings per entry
+  - Audio waveform visualization for playback

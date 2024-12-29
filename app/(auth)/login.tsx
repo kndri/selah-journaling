@@ -1,8 +1,7 @@
-import { useRef, useState } from 'react';
-import { StyleSheet, View, TextInput, Pressable, Text, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View, Text, TextInput, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
 import { fonts } from '@/constants/fonts';
 import { useLogin } from '@/services/auth.service';
 
@@ -10,18 +9,29 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { login } = useLogin();
 
   const handleLogin = async () => {
+    if (!email || !password) return;
+
     try {
-      await login({ email, password });
+      setLoading(true);
+      await login({ 
+        email: email.toLowerCase(), 
+        password 
+      });
+      // Note: useLogin hook handles session storage and navigation
     } catch (error) {
       console.error('Login error:', error);
-      // TODO: Add error toast
+      Alert.alert(
+        'Login Failed', 
+        error instanceof Error ? error.message : 'Please try again'
+      );
+    } finally {
+      setLoading(false);
     }
   };
-
-  const isFormValid = email && password;
 
   return (
     <View style={styles.container}>
@@ -79,15 +89,19 @@ export default function Login() {
         <Pressable 
           style={[
             styles.button,
-            isFormValid && styles.buttonEnabled
-          ]} 
+            email && password ? styles.buttonEnabled : styles.buttonDisabled
+          ]}
           onPress={handleLogin}
-          disabled={!isFormValid}
+          disabled={loading || !email || !password}
         >
-          <Text style={[
-            styles.buttonText,
-            isFormValid && styles.buttonTextEnabled
-          ]}>LOGIN</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={[
+              styles.buttonText,
+              email && password && styles.buttonTextEnabled
+            ]}>LOG IN</Text>
+          )}
         </Pressable>
 
         <View style={styles.footer}>
@@ -166,6 +180,9 @@ const styles = StyleSheet.create({
   },
   buttonEnabled: {
     backgroundColor: '#000',
+  },
+  buttonDisabled: {
+    backgroundColor: '#ccc',
   },
   buttonText: {
     fontFamily: fonts.manropeBold,

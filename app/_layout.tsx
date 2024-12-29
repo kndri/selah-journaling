@@ -3,10 +3,12 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
 import 'react-native-reanimated';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuthStore } from '@/stores/auth.store';
@@ -16,7 +18,8 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [loaded] = useFonts({
     'selah-acorn-regular': require('../assets/fonts/acorn-regular.otf'),
@@ -39,6 +42,28 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Add session check to protected routes
+  const isAuthenticated = !!session;
+
+  if (loading) {
+    return null; // or loading spinner
+  }
+
   if (!loaded) {
     return null;
   }
@@ -52,7 +77,7 @@ export default function RootLayout() {
             options={{
               headerShown: false
             }}
-            redirect={isAuthenticated}
+            redirect={!isAuthenticated}
           />
           <Stack.Screen 
             name="(tabs)"
@@ -60,6 +85,20 @@ export default function RootLayout() {
               headerShown: false
             }}
             redirect={!isAuthenticated}
+          />
+          <Stack.Screen 
+            name="create"
+            options={{
+              headerShown: false,
+              presentation: 'modal'
+            }}
+          />
+          <Stack.Screen 
+            name="insight"
+            options={{
+              headerShown: false,
+              presentation: 'card'
+            }}
           />
           <Stack.Screen name="+not-found" />
         </Stack>

@@ -48,3 +48,13 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Environment Setup
+
+1. Copy `.env.example` to `.env`
+2. Fill in your environment variables:
+   - `EXPO_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+   - `EXPO_PUBLIC_OPENAI_API_KEY`: Your OpenAI API key
+
+Note: Never commit `.env` file to version control

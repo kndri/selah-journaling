@@ -113,5 +113,23 @@ export const reflectionService = {
 
     if (error) throw error;
     return entries;
+  },
+
+  async getEntryWithInsights(entryId: string) {
+    const { data: entry, error } = await supabase
+      .from('journal_entries')
+      .select(`
+        *,
+        reflection_insights (*)
+      `)
+      .eq('id', entryId)
+      .single();
+
+    if (error) {
+      console.error('Failed to fetch entry:', error);
+      throw new Error('Failed to load reflection');
+    }
+
+    return entry;
   }
 }; 

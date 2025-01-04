@@ -26,7 +26,7 @@ export default function RootLayout() {
     'selah-acorn-semibold': require('../assets/fonts/acorn-semibold.otf'),
     'selah-acorn-bold': require('../assets/fonts/acorn-bold.otf'),
     'selah-acorn-thin': require('../assets/fonts/acorn-thin.otf'),
-    
+
     'selah-manrope-light': require('../assets/fonts/Manrope-Light.ttf'),
     'selah-manrope-regular': require('../assets/fonts/Manrope-Regular.ttf'),
     'selah-manrope-medium': require('../assets/fonts/Manrope-Medium.ttf'),
@@ -72,29 +72,36 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={DefaultTheme}>
         <Stack>
-          <Stack.Screen 
+          <Stack.Screen
             name="(auth)"
             options={{
               headerShown: false
             }}
             redirect={!isAuthenticated}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="(tabs)"
             options={{
               headerShown: false
             }}
             redirect={!isAuthenticated}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="create"
             options={{
               headerShown: false,
               presentation: 'modal'
             }}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="insight"
+            options={{
+              headerShown: false,
+              presentation: 'card'
+            }}
+          />
+          <Stack.Screen
+            name="reflection/[id]"
             options={{
               headerShown: false,
               presentation: 'card'

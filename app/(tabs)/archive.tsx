@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { fonts } from '@/constants/fonts';
 import { reflectionService } from '@/services/reflection.service';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Swipeable } from 'react-native-gesture-handler';
+import { SwipeableRow } from '@/components/SwipeableRow';
 
 
 interface ReflectionEntry {
@@ -94,32 +94,9 @@ export default function ArchiveScreen() {
     );
   };
 
-  const renderRightActions = (item: ReflectionEntry, close: () => void) => {
-    return (
-      <View style={[styles.deleteActionContainer, { height: '100%' }]}>
-        <Pressable 
-          style={styles.deleteAction}
-          onPress={() => {
-            close();
-            handleDelete(item.id);
-          }}
-        >
-          <Ionicons name="trash-outline" size={24} color="#fff" />
-          <Text style={styles.deleteActionText}>Delete</Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   const renderReflectionItem = ({ item }: { item: ReflectionEntry }) => {
-    let swipeableRef: Swipeable | null = null;
-
     return (
-      <Swipeable
-        ref={ref => swipeableRef = ref}
-        renderRightActions={() => renderRightActions(item, () => swipeableRef?.close())}
-        rightThreshold={40}
-      >
+      <SwipeableRow onDelete={() => handleDelete(item.id)}>
         <Pressable
           style={styles.reflectionCard}
           onPress={() => router.push({
@@ -146,7 +123,7 @@ export default function ArchiveScreen() {
             </View>
           )}
         </Pressable>
-      </Swipeable>
+      </SwipeableRow>
     );
   };
 

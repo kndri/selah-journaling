@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
-import { Link, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { fonts } from '@/constants/fonts';
+import { JourneyStats } from '@/components/JourneyStats';
+import { reflectionService } from '@/services/reflection.service';
 
 const PROMPTS = [
   {
@@ -57,44 +58,78 @@ const TIPS = [
 ];
 
 export default function HomeScreen() {
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Welcome to Selah</Text>
-            <Text style={styles.subtitle}>Your journey of reflection begins here</Text>
-          </View>
-          <View style={styles.sparkleContainer}>
-            <Text style={styles.sparkle}>✨</Text>
-          </View>
-        </View>
+  const [hasReflections, setHasReflections] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-        <View style={styles.recordCard}>
-          <View style={styles.micContainer}>
-            <Ionicons name="mic" size={32} color="#FF69B4" />
-          </View>
-          <Text style={styles.recordTitle}>Create Your First Reflection</Text>
-          <Text style={styles.recordSubtitle}>
-            Take a moment to pause, breathe, and share what's on your heart
+  useEffect(() => {
+    checkReflections();
+  }, []);
+
+  const checkReflections = async () => {
+    try {
+      const entries = await reflectionService.getAllEntriesWithInsights();
+      setHasReflections(entries.length > 0);
+      
+      if (entries.length > 0) {
+        const today = new Date();
+        let currentStreak = 0;
+        let lastDate = today;
+
+        for (const entry of entries) {
+          const entryDate = new Date(entry.created_at);
+          const diffDays = Math.floor((lastDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays <= 1) {
+            currentStreak++;
+            lastDate = entryDate;
+          } else {
+            break;
+          }
+        }
+
+        setStreak(currentStreak);
+      }
+    } catch (error) {
+      console.error('Failed to check reflections:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return null;
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.greeting}>Welcome back</Text>
+        
+        {hasReflections && <JourneyStats streak={streak} />}
+
+        <View style={styles.ctaContainer}>
+          <Text style={styles.ctaTitle}>
+            {hasReflections 
+              ? `Ready for today's reflection?`
+              : 'Start your reflection journey'}
           </Text>
-          <Pressable 
-            style={styles.recordButton}
-            onPress={() => router.push('/create')}
-          >
-            <Text style={styles.recordButtonText}>Start Recording</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </Pressable>
+          <Text style={styles.ctaSubtitle}>
+            {hasReflections
+              ? 'Take a moment to reflect on your day.'
+              : 'Begin your journey of self-discovery through guided reflections.'}
+          </Text>
+          <Link href="/create" asChild>
+            <Pressable style={styles.ctaButton}>
+              <Text style={styles.ctaButtonText}>
+                {hasReflections ? 'New Reflection' : 'Start Now'}
+              </Text>
+            </Pressable>
+          </Link>
         </View>
 
         <View style={styles.promptsSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Need inspiration?</Text>
-            <Link href="/prompts" style={styles.seeAllLink}>
-              <Text style={styles.seeAllText}>See all prompts</Text>
-            </Link>
-          </View>
-
+          <Text style={styles.sectionTitle}>Need inspiration?</Text>
           {PROMPTS.map((prompt) => (
             <Pressable
               key={prompt.id}
@@ -127,108 +162,62 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#FFFDF7',
   },
-  container: {
+  content: {
     flex: 1,
-  },
-  contentContainer: {
     padding: 20,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  greeting: {
+    fontFamily: fonts.acornSemibold,
+    fontSize: 24,
     marginBottom: 24,
   },
-  title: {
-    fontFamily: fonts.acornSemibold,
-    fontSize: 32,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontFamily: fonts.manropeRegular,
-    fontSize: 16,
-    color: '#666',
-  },
-  sparkleContainer: {
-    backgroundColor: '#FFE5EC',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sparkle: {
-    fontSize: 20,
-  },
-  recordCard: {
-    backgroundColor: '#FFF0F5',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  micContainer: {
+  ctaContainer: {
     backgroundColor: '#fff',
-    borderRadius: 32,
-    width: 64,
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  recordTitle: {
-    fontFamily: fonts.manropeBold,
-    fontSize: 24,
-    textAlign: 'center',
+  ctaTitle: {
+    fontFamily: fonts.manropeSemibold,
+    fontSize: 20,
     marginBottom: 8,
   },
-  recordSubtitle: {
+  ctaSubtitle: {
     fontFamily: fonts.manropeRegular,
     fontSize: 16,
-    textAlign: 'center',
     color: '#666',
     marginBottom: 24,
   },
-  recordButton: {
+  ctaButton: {
     backgroundColor: '#000',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
     borderRadius: 12,
-    width: '100%',
-    justifyContent: 'center',
+    paddingVertical: 16,
+    alignItems: 'center',
   },
-  recordButtonText: {
+  ctaButtonText: {
     fontFamily: fonts.manropeBold,
-    color: '#fff',
     fontSize: 16,
+    color: '#fff',
   },
   promptsSection: {
     marginBottom: 32,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   sectionTitle: {
-    fontFamily: fonts.manropeBold,
+    fontFamily: fonts.manropeSemibold,
     fontSize: 20,
-  },
-  seeAllLink: {
-    padding: 4,
-  },
-  seeAllText: {
-    fontFamily: fonts.manropeMedium,
-    fontSize: 16,
-    color: '#FF69B4',
+    marginBottom: 16,
   },
   promptCard: {
     flexDirection: 'row',
@@ -242,14 +231,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   promptTitle: {
-    fontFamily: fonts.manropeBold,
+    fontFamily: fonts.manropeSemibold,
     fontSize: 16,
     marginBottom: 4,
   },
   promptQuestion: {
     fontFamily: fonts.manropeRegular,
     fontSize: 14,
-    paddingRight: 30,
     color: '#666',
   },
   tipsSection: {
@@ -259,20 +247,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
-    marginTop: 16,
   },
   tipCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     width: '47%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tipIcon: {
     fontSize: 24,
     marginBottom: 8,
   },
   tipTitle: {
-    fontFamily: fonts.manropeBold,
+    fontFamily: fonts.manropeSemibold,
     fontSize: 16,
     marginBottom: 4,
   },

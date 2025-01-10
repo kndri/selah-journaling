@@ -210,14 +210,15 @@ export default function CreateReflectionScreen() {
       // Generate insights
       const insights = await aiService.generateInsights(fullText);
 
-      // Save entry and insights
-      await reflectionService.createEntryWithInsights({
-        content: fullText,
-        insights: insights.insights,
+      // Navigate to insights screen instead of home
+      router.push({
+        pathname: '/insight',
+        params: {
+          reflection: fullText,
+          insights: JSON.stringify(insights)
+        }
       });
 
-      // Navigate to home
-      router.replace('/(tabs)');
     } catch (error) {
       console.error('Processing failed:', error);
       Alert.alert(

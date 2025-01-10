@@ -239,6 +239,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.manropeRegular,
     fontSize: 14,
     color: '#666',
+    paddingRight: 20
   },
   tipsSection: {
     marginBottom: 32,

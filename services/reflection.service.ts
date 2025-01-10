@@ -93,11 +93,14 @@ export const reflectionService = {
       .from('journal_entries')
       .select(`
         *,
-        reflection_insights (*)
+        reflection_insights!reflection_insights_entry_id_fkey (*)
       `)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Failed to fetch entries:', error);
+      throw error;
+    }
     return entries;
   },
 
@@ -120,7 +123,7 @@ export const reflectionService = {
       .from('journal_entries')
       .select(`
         *,
-        reflection_insights (*)
+        reflection_insights!reflection_insights_entry_id_fkey (*)
       `)
       .eq('id', entryId)
       .single();
@@ -131,5 +134,73 @@ export const reflectionService = {
     }
 
     return entry;
-  }
+  },
+
+  async deleteEntry(entryId: string) {
+    console.log('Starting delete operation for entry:', entryId);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      console.error('No authenticated user found');
+      throw new Error('User must be authenticated to delete entries');
+    }
+
+    // First verify the entry exists and belongs to user
+    const { data: entry, error: fetchError } = await supabase
+      .from('journal_entries')
+      .select('id, user_id')
+      .eq('id', entryId)
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (fetchError || !entry) {
+      console.error('Entry not found or unauthorized:', fetchError);
+      throw new Error('Entry not found or unauthorized');
+    }
+
+    console.log('Found entry to delete:', entry);
+
+    // Delete insights first
+    const { error: insightsError } = await supabase
+      .from('reflection_insights')
+      .delete()
+      .eq('entry_id', entryId)
+      .eq('user_id', session.user.id);
+
+    if (insightsError) {
+      console.error('Failed to delete insights:', insightsError);
+      throw insightsError;
+    }
+
+    console.log('Successfully deleted insights');
+
+    // Delete the journal entry with explicit user check
+    const { error: entryError } = await supabase
+      .from('journal_entries')
+      .delete()
+      .match({ 
+        id: entryId,
+        user_id: session.user.id 
+      });
+
+    if (entryError) {
+      console.error('Failed to delete journal entry:', entryError);
+      throw entryError;
+    }
+
+    // Final verification
+    const { data: verifyEntry } = await supabase
+      .from('journal_entries')
+      .select('id')
+      .eq('id', entryId)
+      .maybeSingle();
+
+    if (verifyEntry) {
+      console.error('Entry still exists after deletion:', entryId);
+      throw new Error('Failed to delete entry - entry still exists');
+    }
+
+    console.log('Successfully deleted entry and verified deletion');
+    return true;
+  },
 }; 

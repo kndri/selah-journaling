@@ -9,6 +9,7 @@ import Toast from 'react-native-toast-message';
 import 'react-native-reanimated';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuthStore } from '@/stores/auth.store';
@@ -70,48 +71,57 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={DefaultTheme}>
-        <Stack>
-          <Stack.Screen
-            name="(auth)"
-            options={{
-              headerShown: false
-            }}
-            redirect={!isAuthenticated}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false
-            }}
-            redirect={!isAuthenticated}
-          />
-          <Stack.Screen
-            name="create"
-            options={{
-              headerShown: false,
-              presentation: 'modal'
-            }}
-          />
-          <Stack.Screen
-            name="insight"
-            options={{
-              headerShown: false,
-              presentation: 'card'
-            }}
-          />
-          <Stack.Screen
-            name="reflection/[id]"
-            options={{
-              headerShown: false,
-              presentation: 'card'
-            }}
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="dark" />
-      </ThemeProvider>
-      <Toast position="top" />
+      <BottomSheetModalProvider>
+        <ThemeProvider value={DefaultTheme}>
+          <Stack>
+            <Stack.Screen
+              name="(auth)"
+              options={{
+                headerShown: false
+              }}
+              redirect={!isAuthenticated}
+            />
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false
+              }}
+              redirect={!isAuthenticated}
+            />
+            <Stack.Screen
+              name="create"
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen
+              name="insight"
+              options={{
+                headerShown: false,
+                presentation: 'card'
+              }}
+            />
+            <Stack.Screen
+              name="reflection/[id]"
+              options={{
+                headerShown: false,
+                presentation: 'card'
+              }}
+            />
+            <Stack.Screen
+              name="highlight"
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="dark" />
+        </ThemeProvider>
+        <Toast position="top" />
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }

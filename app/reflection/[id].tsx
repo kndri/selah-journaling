@@ -24,6 +24,7 @@ export default function ReflectionDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [reflection, setReflection] = useState<ReflectionDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showInsights, setShowInsights] = useState(false);
 
     useEffect(() => {
         loadReflection();
@@ -76,9 +77,21 @@ export default function ReflectionDetailScreen() {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                     <Ionicons name="chevron-back" size={24} color="#000" />
-                    
                 </Pressable>
                 <Text style={styles.date}>{formatDate(reflection.created_at)}</Text>
+                <Pressable 
+                    style={styles.highlightButton}
+                    onPress={() => router.push({
+                        pathname: '/highlight',
+                        params: {
+                            summary: reflection.reflection_insights[0]?.insight || '',
+                            suggestion: reflection.reflection_insights[0]?.explanation || '',
+                            goal: 'Take time each day to reflect on your experiences and growth.'
+                        }
+                    })}
+                >
+                    <Text style={styles.highlightButtonText}>Highlight</Text>
+                </Pressable>
             </View>
 
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -127,6 +140,9 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E5E5',
     },
     backButton: {
         padding: 4,
@@ -225,6 +241,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#666',
         textAlign: 'center',
+    },
+    highlightButton: {
+        backgroundColor: '#000',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    highlightButtonText: {
+        fontFamily: fonts.manropeMedium,
+        fontSize: 14,
+        color: '#fff',
     },
 });
 

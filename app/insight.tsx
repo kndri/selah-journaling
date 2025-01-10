@@ -7,6 +7,14 @@ import { reflectionService } from '@/services/reflection.service';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 
+interface InsightData {
+  insight: string;
+  scripture: {
+    verse: string;
+    reference: string;
+  } | undefined;
+  reflection: string;
+}
 
 export default function InsightScreen() {
   const { reflection, insights } = useLocalSearchParams<{
@@ -14,23 +22,42 @@ export default function InsightScreen() {
     insights: string;
   }>();
 
-  const parsedInsights = JSON.parse(insights);
-
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Safely parse insights with error handling
+  const parsedInsights: InsightData = (() => {
+    try {
+      const parsed = JSON.parse(insights);
+      return {
+        insight: parsed.insight || 'No insight available',
+        scripture: parsed.scripture || { verse: '', reference: '' },
+        reflection: parsed.reflection || ''
+      };
+    } catch (e) {
+      console.error('Failed to parse insights:', e);
+      return {
+        insight: 'Error loading insight',
+        scripture: { verse: '', reference: '' },
+        reflection: ''
+      };
+    }
+  })();
 
   const handleFinish = async () => {
     try {
       setIsSaving(true);
 
-      await reflectionService.createReflection({
+      await reflectionService.createEntryWithInsights({
         content: reflection,
-        insight: parsedInsights.insight,
-        scripture_verse: parsedInsights.scripture.verse,
-        scripture_reference: parsedInsights.scripture.reference,
-        explanation: parsedInsights.reflection,
+        insights: [{
+          insight: parsedInsights.insight,
+          scripture_verse: parsedInsights.scripture?.verse || '',
+          scripture_reference: parsedInsights.scripture?.reference || '',
+          explanation: parsedInsights.reflection,
+          theme: undefined // optional theme field
+        }]
       });
 
-      // Navigate back to home
       router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to save reflection:', error);
@@ -57,14 +84,16 @@ export default function InsightScreen() {
           <Text style={styles.insightText}>{parsedInsights.insight}</Text>
         </View>
 
-        <View style={styles.scriptureCard}>
-          <Text style={styles.scriptureText}>
-            "{parsedInsights.scripture.verse}"
-          </Text>
-          <Text style={styles.scriptureReference}>
-            — {parsedInsights.scripture.reference}
-          </Text>
-        </View>
+        {parsedInsights.scripture?.verse && (
+          <View style={styles.scriptureCard}>
+            <Text style={styles.scriptureText}>
+              "{parsedInsights.scripture.verse}"
+            </Text>
+            <Text style={styles.scriptureReference}>
+              — {parsedInsights.scripture.reference}
+            </Text>
+          </View>
+        )}
 
         <Text style={styles.explanation}>
           {parsedInsights.reflection}

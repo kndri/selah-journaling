@@ -135,20 +135,11 @@ export default function ArchiveScreen() {
               <Text style={styles.reflectionDate}>{formatDate(item.created_at)}</Text>
             </View>
             <View style={styles.reflectionActions}>
-              <View style={styles.reflectionMeta}>
-                <Ionicons name="mic-outline" size={16} color="#666" />
-                <Text style={styles.reflectionDuration}>
-                  {getReflectionDuration(item.content)}
-                </Text>
-              </View>
               <Ionicons name="chevron-forward" size={16} color="#666" />
             </View>
           </View>
           {item.reflection_insights[0]?.theme && (
-            <View style={[
-              styles.reflectionTag,
-              { backgroundColor: getThemeColor(item.reflection_insights[0].theme) }
-            ]}>
+            <View style={styles.reflectionTag}>
               <Text style={styles.reflectionTagText}>
                 {item.reflection_insights[0].theme}
               </Text>
@@ -164,6 +155,24 @@ export default function ArchiveScreen() {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#000" />
       </View>
+    );
+  }
+
+  if (!reflections.length) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Your Reflections</Text>
+          <Text style={styles.subtitle}>Track your journey of self-discovery</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="journal-outline" size={48} color="#666" />
+          <Text style={styles.emptyTitle}>No reflections yet</Text>
+          <Text style={styles.emptyText}>
+            Your reflections will appear here after you create them
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -258,6 +267,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 16,
     marginTop: 12,
+    backgroundColor: '#000',
   },
   reflectionTagText: {
     fontFamily: fonts.manropeMedium,
@@ -312,6 +322,25 @@ const styles = StyleSheet.create({
   deleteActionContainer: {
     width: 80,
     height: '100%',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
+  emptyTitle: {
+    fontFamily: fonts.manropeSemibold,
+    fontSize: 18,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontFamily: fonts.manropeRegular,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
 });
 

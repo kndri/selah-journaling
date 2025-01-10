@@ -68,6 +68,11 @@ Note: Never commit `.env` file to version control
   - [ ] Add loading states during processing
   - [ ] Implement proper error handling feedback
 
+- [ ] Add reflection theme colors
+  - Implement color mapping for different reflection themes
+  - Create color palette for different themes
+  - Add theme color selection in creation flow
+
 ### Future Features
 - [ ] Audio Storage
   - Save audio recordings alongside transcriptions

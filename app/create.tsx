@@ -207,17 +207,39 @@ export default function CreateReflectionScreen() {
         throw new Error('No content to process after transcription');
       }
 
+      console.log('Generating insights for text:', { textLength: fullText.length });
+      
       // Generate insights
       const insights = await aiService.generateInsights(fullText);
+      console.log('Got insights:', insights);
 
-      // Navigate to insights screen instead of home
-      router.push({
-        pathname: '/insight',
-        params: {
-          reflection: fullText,
-          insights: JSON.stringify(insights)
-        }
-      });
+      if (!insights?.insights?.[0]) {
+        throw new Error('Failed to generate insights');
+      }
+
+      // Take the first insight and navigate
+      const firstInsight = insights.insights[0];
+      
+      // Close the modal first
+      router.back();
+
+      // Then navigate to insights screen
+      setTimeout(() => {
+        router.push({
+          pathname: '/insight',
+          params: {
+            reflection: fullText,
+            insights: JSON.stringify({
+              insight: firstInsight.insight,
+              scripture: {
+                verse: firstInsight.scripture.verse,
+                reference: firstInsight.scripture.reference
+              },
+              reflection: firstInsight.explanation
+            })
+          }
+        });
+      }, 100);
 
     } catch (error) {
       console.error('Processing failed:', error);

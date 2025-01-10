@@ -4,16 +4,15 @@ const openai = new OpenAI({
   apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY,
 });
 
-interface InsightResponse {
-  insights: Array<{
-    insight: string;
-    scripture: {
-      verse: string;
-      reference: string;
-    };
-    explanation: string;
-    theme?: string;
-  }>;
+interface ReflectionSummary {
+  title: string;
+  highlight: string;
+  challenge: string;
+  goal: string;
+  scripture: {
+    verse: string;
+    reference: string;
+  };
 }
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -56,7 +55,7 @@ async function withRetry<T>(
 }
 
 export const aiService = {
-  async generateInsights(text: string): Promise<InsightResponse> {
+  async generateInsights(text: string): Promise<ReflectionSummary> {
     return withRetry(
       async () => {
         console.log('Starting generateInsights:', { textLength: text.length });
@@ -66,28 +65,23 @@ export const aiService = {
           messages: [
             {
               role: "system",
-              content: `Analyze the journal entry and identify multiple key reflection points. 
-              For each point, provide:
-              1. A specific insight
-              2. A relevant Bible verse
-              3. A thoughtful explanation
-              4. An optional theme/category
+              content: `Analyze the journal entry and create a structured reflection summary with:
+              1. A title that captures the main theme
+              2. A highlight - something positive or encouraging
+              3. A challenge being faced
+              4. A goal or action step forward
+              5. A relevant Bible verse with reference
               
-              Format as JSON array with multiple insights.
-              
-              Example format:
+              Format as JSON with this structure:
               {
-                "insights": [
-                  {
-                    "insight": "Your specific insight here",
-                    "scripture": {
-                      "verse": "The Bible verse text",
-                      "reference": "Book Chapter:Verse"
-                    },
-                    "explanation": "Your explanation here",
-                    "theme": "Optional theme"
-                  }
-                ]
+                "title": "Meaningful title here",
+                "highlight": "Key positive moment or realization",
+                "challenge": "Main struggle or difficulty",
+                "goal": "Actionable step or intention",
+                "scripture": {
+                  "verse": "Bible verse text",
+                  "reference": "Book Chapter:Verse"
+                }
               }`
             },
             {
@@ -101,26 +95,17 @@ export const aiService = {
           throw new Error('No content received from OpenAI');
         }
 
-        console.log('OpenAI response received:', {
-          hasContent: true,
-          contentLength: completion.choices[0].message.content.length,
-        });
-
         const parsed = JSON.parse(completion.choices[0].message.content);
         
-        if (!parsed.insights || !Array.isArray(parsed.insights) || parsed.insights.length === 0) {
-          throw new Error('Invalid or empty insights structure received');
+        // Validate response structure
+        if (!parsed.title || !parsed.highlight || !parsed.challenge || 
+            !parsed.goal || !parsed.scripture?.verse || !parsed.scripture?.reference) {
+          throw new Error('Invalid response structure received');
         }
 
-        // Validate each insight
-        parsed.insights.forEach((insight, index) => {
-          if (!insight.insight || !insight.scripture?.verse || !insight.scripture?.reference || !insight.explanation) {
-            throw new Error(`Invalid insight structure at index ${index}`);
-          }
-        });
-
         console.log('Response parsed successfully:', {
-          insightsCount: parsed.insights.length,
+          title: parsed.title,
+          hasAllFields: true
         });
 
         return parsed;

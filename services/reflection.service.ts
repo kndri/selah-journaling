@@ -8,63 +8,49 @@ interface ReflectionInsight {
   theme?: string;
 }
 
+interface ReflectionSummary {
+  highlight: string;
+  challenge: string;
+  goal: string;
+}
+
 interface CreateEntryDTO {
-  content: string;
-  insights: ReflectionInsight[];
+  title: string;
+  transcript: string;
+  highlight: string;
+  challenge: string;
+  goal: string;
+  scripture_verse?: string;
+  scripture_reference?: string;
+  explanation?: string;
 }
 
 export const reflectionService = {
-  async createEntryWithInsights({ content, insights }: CreateEntryDTO) {
+  async createEntryWithInsights(data: CreateEntryDTO) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         throw new Error('User must be authenticated to create entries');
       }
 
-      console.log('Creating entry with user_id:', session.user.id);
-
       // Create journal entry
       const { data: entry, error: entryError } = await supabase
         .from('journal_entries')
         .insert([{ 
-          content,
-          user_id: session.user.id
+          title: data.title,
+          transcript: data.transcript,
+          highlight: data.highlight,
+          challenge: data.challenge,
+          goal: data.goal,
+          user_id: session.user.id,
+          scripture_verse: data.scripture_verse,
+          scripture_reference: data.scripture_reference,
+          explanation: data.explanation
         }])
         .select()
         .single();
 
-      if (entryError) {
-        console.error('Entry creation error details:', entryError);
-        throw new Error(`Failed to create journal entry: ${entryError.message || 'Database error'}`);
-      }
-
-      if (!entry) {
-        throw new Error('No entry returned after creation');
-      }
-
-      console.log('Entry created successfully:', entry.id);
-
-      // Map insights to match database structure
-      const mappedInsights = insights.map(insight => ({
-        entry_id: entry.id,
-        user_id: session.user.id,
-        insight: insight.insight,
-        scripture_verse: insight.scripture_verse,
-        scripture_reference: insight.scripture_reference,
-        explanation: insight.explanation,
-        theme: insight.theme
-      }));
-
-      // Insert insights
-      const { error: insightsError } = await supabase
-        .from('reflection_insights')
-        .insert(mappedInsights);
-
-      if (insightsError) {
-        console.error('Insights creation error details:', insightsError);
-        throw new Error(`Failed to create insights: ${insightsError.message || 'Database error'}`);
-      }
-
+      if (entryError) throw entryError;
       return entry;
     } catch (error) {
       console.error('Failed to create entry:', error);

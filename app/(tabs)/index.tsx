@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fonts } from '@/constants/fonts';
 import { JourneyStats } from '@/components/JourneyStats';
 import { reflectionService } from '@/services/reflection.service';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 const PROMPTS = [
   {
@@ -104,7 +106,16 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.greeting}>Welcome back</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Journal</Text>
+          <Pressable 
+            onPress={() => router.push('/settings')}
+            style={styles.profileButton}
+            hitSlop={8}
+          >
+            <Ionicons name="person-circle-outline" size={28} color="#000" />
+          </Pressable>
+        </View>
         
         {hasReflections && <JourneyStats streak={streak} />}
 
@@ -276,5 +287,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.manropeRegular,
     fontSize: 14,
     color: '#666',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  title: {
+    fontFamily: fonts.manropeBold,
+    fontSize: 28,
+  },
+  profileButton: {
+    padding: 4,
   },
 });

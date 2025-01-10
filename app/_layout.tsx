@@ -116,6 +116,20 @@ export default function RootLayout() {
                 presentation: 'modal'
               }}
             />
+            <Stack.Screen
+              name="settings"
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen
+              name="settings/reminders"
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="dark" />

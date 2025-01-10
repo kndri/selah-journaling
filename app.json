@@ -22,7 +22,9 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {
@@ -46,6 +48,14 @@
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
           "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
         }
       ]
     ],

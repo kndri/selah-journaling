@@ -10,6 +10,8 @@ import 'react-native-reanimated';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuthStore } from '@/stores/auth.store';
@@ -56,6 +58,20 @@ export default function RootLayout() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const screen = response.notification.request.content.data?.screen;
+      if (screen === 'create') {
+        // Delay navigation to ensure app is mounted
+        setTimeout(() => {
+          router.push('/create');
+        }, 1000);
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
 
   // Add session check to protected routes

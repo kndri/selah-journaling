@@ -1,18 +1,90 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Pressable, Switch, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fonts } from '@/constants/fonts';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { notificationService } from '@/services/notification.service';
+import Toast from 'react-native-toast-message';
 
 export default function RemindersScreen() {
   const [reflectionEnabled, setReflectionEnabled] = useState(true);
   const [reflectionTime, setReflectionTime] = useState(new Date().setHours(6, 0));
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const handleTimeSelect = (date: Date) => {
-    setReflectionTime(date.getTime());
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await notificationService.getCurrentSettings();
+      if (settings.time) {
+        setReflectionTime(settings.time.getTime());
+      }
+      setReflectionEnabled(settings.enabled);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const handleToggleReminder = async (value: boolean) => {
+    try {
+      if (value) {
+        const hasPermission = await notificationService.requestPermissions();
+        if (!hasPermission) {
+          Toast.show({
+            type: 'info',
+            text1: 'Notification Permission Required',
+            text2: 'Please enable notifications to receive daily reminders',
+          });
+          return;
+        }
+      }
+
+      await notificationService.scheduleReflectionReminder(
+        new Date(reflectionTime),
+        value
+      );
+      setReflectionEnabled(value);
+      
+      Toast.show({
+        type: 'success',
+        text1: value ? 'Reminders Enabled' : 'Reminders Disabled',
+        text2: value 
+          ? 'You will receive daily reflection reminders' 
+          : 'Daily reminders have been turned off',
+      });
+    } catch (error) {
+      console.error('Error toggling reminder:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update reminder settings',
+      });
+    }
+  };
+
+  const handleTimeSelect = async (date: Date) => {
+    try {
+      setReflectionTime(date.getTime());
+      if (reflectionEnabled) {
+        await notificationService.scheduleReflectionReminder(date, true);
+        Toast.show({
+          type: 'success',
+          text1: 'Reminder Updated',
+          text2: 'Your daily reminder time has been updated',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating reminder time:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update reminder time',
+      });
+    }
     setShowTimePicker(false);
   };
 
@@ -56,7 +128,7 @@ export default function RemindersScreen() {
               <Text style={styles.reminderTime}>{formatTime(reflectionTime)}</Text>
               <Switch
                 value={reflectionEnabled}
-                onValueChange={setReflectionEnabled}
+                onValueChange={handleToggleReminder}
                 trackColor={{ false: '#E5E5E5', true: '#FF3B30' }}
               />
             </Pressable>

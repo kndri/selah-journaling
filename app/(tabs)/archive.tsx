@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Pressable, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Pressable, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fonts } from '@/constants/fonts';
 import { reflectionService } from '@/services/reflection.service';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
 
 
 interface ReflectionEntry {
@@ -56,47 +57,122 @@ export default function ArchiveScreen() {
     return `${minutes}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`;
   };
 
-  const renderReflectionItem = ({ item }: { item: ReflectionEntry }) => (
-    <Pressable
-      style={styles.reflectionCard}
-      onPress={() => router.push({
-        pathname: '/reflection/[id]',
-        params: { id: item.id }
-      })}
-    >
-      <View style={styles.reflectionHeader}>
-        <View>
-          <Text style={styles.reflectionTitle}>
-            {item.reflection_insights[0]?.insight || 'Untitled Reflection'}
-          </Text>
-          <Text style={styles.reflectionDate}>{formatDate(item.created_at)}</Text>
-        </View>
-        <View style={styles.reflectionMeta}>
-          <Ionicons name="mic-outline" size={16} color="#666" />
-          <Text style={styles.reflectionDuration}>
-            {getReflectionDuration(item.content)}
-          </Text>
-          <Ionicons name="chevron-forward" size={16} color="#666" />
-        </View>
+  const handleDelete = async (id: string) => {
+    Alert.alert(
+      'Delete Reflection',
+      'Are you sure you want to delete this reflection? This cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await reflectionService.deleteEntry(id);
+              
+              // Force refresh from server instead of optimistic update
+              const updatedEntries = await reflectionService.getAllEntriesWithInsights();
+              console.log('Fetched entries after delete:', updatedEntries.map(e => e.id));
+              setReflections(updatedEntries);
+              
+            } catch (error) {
+              console.error('Failed to delete reflection:', error);
+              Alert.alert(
+                'Error',
+                'Failed to delete reflection. Please try again.'
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderRightActions = (item: ReflectionEntry, close: () => void) => {
+    return (
+      <View style={[styles.deleteActionContainer, { height: '100%' }]}>
+        <Pressable 
+          style={styles.deleteAction}
+          onPress={() => {
+            close();
+            handleDelete(item.id);
+          }}
+        >
+          <Ionicons name="trash-outline" size={24} color="#fff" />
+          <Text style={styles.deleteActionText}>Delete</Text>
+        </Pressable>
       </View>
-      {item.reflection_insights[0]?.theme && (
-        <View style={[
-          styles.reflectionTag,
-          { backgroundColor: getThemeColor(item.reflection_insights[0].theme) }
-        ]}>
-          <Text style={styles.reflectionTagText}>
-            {item.reflection_insights[0].theme}
-          </Text>
-        </View>
-      )}
-    </Pressable>
-  );
+    );
+  };
+
+  const renderReflectionItem = ({ item }: { item: ReflectionEntry }) => {
+    let swipeableRef: Swipeable | null = null;
+
+    return (
+      <Swipeable
+        ref={ref => swipeableRef = ref}
+        renderRightActions={() => renderRightActions(item, () => swipeableRef?.close())}
+        rightThreshold={40}
+      >
+        <Pressable
+          style={styles.reflectionCard}
+          onPress={() => router.push({
+            pathname: '/reflection/[id]',
+            params: { id: item.id }
+          })}
+        >
+          <View style={styles.reflectionHeader}>
+            <View>
+              <Text style={styles.reflectionTitle}>
+                {item.reflection_insights[0]?.insight || 'Untitled Reflection'}
+              </Text>
+              <Text style={styles.reflectionDate}>{formatDate(item.created_at)}</Text>
+            </View>
+            <View style={styles.reflectionActions}>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </View>
+          </View>
+          {item.reflection_insights[0]?.theme && (
+            <View style={styles.reflectionTag}>
+              <Text style={styles.reflectionTagText}>
+                {item.reflection_insights[0].theme}
+              </Text>
+            </View>
+          )}
+        </Pressable>
+      </Swipeable>
+    );
+  };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#000" />
       </View>
+    );
+  }
+
+  if (!reflections.length) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Your Reflections</Text>
+          <Text style={styles.subtitle}>Track your journey of self-discovery</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="journal-outline" size={48} color="#666" />
+          <Text style={styles.emptyTitle}>No reflections yet</Text>
+          <Text style={styles.emptyText}>
+            Your reflections will appear here after you create them
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -191,6 +267,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 16,
     marginTop: 12,
+    backgroundColor: '#000',
   },
   reflectionTagText: {
     fontFamily: fonts.manropeMedium,
@@ -219,6 +296,51 @@ const styles = StyleSheet.create({
     fontFamily: fonts.manropeBold,
     fontSize: 20,
     color: '#fff',
+  },
+  reflectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  deleteAction: {
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    width: '100%',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  deleteActionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: fonts.manropeMedium,
+  },
+  deleteActionContainer: {
+    width: 80,
+    height: '100%',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
+  emptyTitle: {
+    fontFamily: fonts.manropeSemibold,
+    fontSize: 18,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontFamily: fonts.manropeRegular,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
 });
 

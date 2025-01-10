@@ -12,6 +12,7 @@ import { RecordingVisualizer } from '@/components/RecordingVisualizer';
 import { aiService } from '@/services/ai.service';
 import { transcriptionService } from '@/services/transcription.service';
 import { reflectionService } from '@/services/reflection.service';
+import { ProcessingScreen } from '@/components/ProcessingScreen';
 
 interface Recording {
   id: string;
@@ -27,6 +28,7 @@ export default function CreateReflectionScreen() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showProcessing, setShowProcessing] = useState(false);
   
   const recording = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<NodeJS.Timer | null>(null);
@@ -176,7 +178,11 @@ export default function CreateReflectionScreen() {
 
   const handleDone = async () => {
     try {
+      setShowProcessing(true);
       setIsProcessing(true);
+
+      // Wait for processing animation
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Check authentication first
       const { data: { session } } = await supabase.auth.getSession();
@@ -252,6 +258,7 @@ export default function CreateReflectionScreen() {
       );
     } finally {
       setIsProcessing(false);
+      setShowProcessing(false);
     }
   };
 
@@ -336,6 +343,11 @@ export default function CreateReflectionScreen() {
           </Pressable>
         </View>
       </View>
+      {showProcessing && (
+        <View style={StyleSheet.absoluteFill}>
+          <ProcessingScreen />
+        </View>
+      )}
     </SafeAreaView>
   );
 }

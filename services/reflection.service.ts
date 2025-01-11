@@ -116,6 +116,20 @@ export const reflectionService = {
     return entry;
   },
 
+  async getEntryById(entryId: string) {
+    const { data: entry, error } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('id', entryId)
+      .single();
+
+    if (error) {
+      console.error('Failed to fetch entry:', error);
+      throw error;
+    }
+    return entry;
+  },
+
   async deleteEntry(entryId: string) {
     console.log('Starting delete operation for entry:', entryId);
     

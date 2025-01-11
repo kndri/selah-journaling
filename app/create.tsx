@@ -228,11 +228,16 @@ export default function CreateReflectionScreen() {
           pathname: '/insight',
           params: {
             title: insights.title,
+            transcriptSummary: insights.transcript_summary,
             transcript: fullText,
             highlight: insights.highlight,
             challenge: insights.challenge,
             goal: JSON.stringify(insights.goal),
-            scripture: JSON.stringify(insights.scripture)
+            scripture: JSON.stringify(insights.scripture),
+            theme: insights.theme,
+            sub_theme: insights.sub_theme,
+            color: insights.color,
+            shape: insights.shape
           }
         });
       }, 100);

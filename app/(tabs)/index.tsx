@@ -107,7 +107,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Journal</Text>
+          <Text style={styles.title}>Welcome to Selah</Text>
           <Pressable 
             onPress={() => router.push('/settings')}
             style={styles.profileButton}

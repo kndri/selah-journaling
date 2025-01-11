@@ -17,12 +17,17 @@ interface ReflectionSummary {
 interface CreateEntryDTO {
   title: string;
   transcript: string;
+  transcript_summary: string;
   highlight: string;
   challenge: string;
   goal: string;
   scripture_verse?: string;
   scripture_reference?: string;
   explanation?: string;
+  theme: string;
+  sub_theme: string; 
+  color: string; 
+  shape: string;
 }
 
 export const reflectionService = {
@@ -39,13 +44,18 @@ export const reflectionService = {
         .insert([{ 
           title: data.title,
           transcript: data.transcript,
+          transcript_summary: data.transcript_summary,
           highlight: data.highlight,
           challenge: data.challenge,
           goal: data.goal,
           user_id: session.user.id,
           scripture_verse: data.scripture_verse,
           scripture_reference: data.scripture_reference,
-          explanation: data.explanation
+          explanation: data.explanation,
+          theme: data.theme,
+          sub_theme: data.sub_theme,
+          color: data.color,
+          shape: data.shape,
         }])
         .select()
         .single();

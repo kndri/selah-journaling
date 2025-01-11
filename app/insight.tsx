@@ -3,6 +3,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fonts } from '@/constants/fonts';
 import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { reflectionService } from '@/services/reflection.service';
 import { useState } from 'react';
 import { Alert } from 'react-native';
@@ -13,14 +15,28 @@ interface Goal {
   third: string;
 }
 
+type ThemeColor = 'Red' | 'Blue' | 'Green' | 'Purple';
+
+const themeColorMap: Record<ThemeColor, string> = {
+  Red: '#FF6B6B',    // A soft, warm red
+  Blue: '#4ECDC4',   // A calming teal-blue
+  Green: '#45B7A0',  // A soothing sage green
+  Purple: '#9D80CB', // A gentle lavender purple
+};
+
 export default function InsightScreen() {
   const params = useLocalSearchParams<{
     title: string;
+    transcriptSummary: string;
     transcript: string;
     highlight: string;
     challenge: string;
     goal: string;
     scripture?: string;
+    theme: string;
+    sub_theme: string;
+    color: string;
+    shape: string;
   }>();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +46,7 @@ export default function InsightScreen() {
     try {
       if (!params.goal) return null;
       const parsed = JSON.parse(params.goal);
-      
+
       // If it's already an object with first/second/third
       if (typeof parsed === 'object' && parsed.first) {
         return (
@@ -41,7 +57,7 @@ export default function InsightScreen() {
           </>
         );
       }
-      
+
       // If it's a string, just render it directly
       return <Text style={styles.insightText}>{parsed}</Text>;
     } catch (e) {
@@ -53,7 +69,7 @@ export default function InsightScreen() {
   const handleFinish = async () => {
     try {
       setIsSaving(true);
-      
+
       let scriptureData = { verse: '', reference: '' };
       try {
         if (params.scripture) {
@@ -65,12 +81,17 @@ export default function InsightScreen() {
 
       await reflectionService.createEntryWithInsights({
         title: params.title,
+        transcript_summary: params.transcriptSummary,
         transcript: params.transcript,
         highlight: params.highlight,
         challenge: params.challenge,
         goal: params.goal,
         scripture_verse: scriptureData.verse,
-        scripture_reference: scriptureData.reference
+        scripture_reference: scriptureData.reference,
+        theme: params.theme,
+        sub_theme: params.sub_theme,
+        color: params.color,
+        shape: params.shape
       });
 
       router.replace('/(tabs)');
@@ -102,6 +123,29 @@ export default function InsightScreen() {
         <View style={styles.header}>
           <Text style={styles.date}>Saturday, December 28, 2024</Text>
           <Text style={styles.title}>{params.title}</Text>
+        </View>
+
+        <View style={styles.summaryCard}>
+        <LinearGradient
+            colors={['#fff7ed', '#fdf2f8']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.summaryHeader}>
+            <View style={[styles.summaryIcon, { backgroundColor: params.color ? themeColorMap[params.color as ThemeColor] : '#f97316' }]}>
+              {params.shape === 'Circle' && <Ionicons name="ellipse-outline" size={24} color={params.color ? themeColorMap[params.color as ThemeColor] : '#f97316'} />}
+              {params.shape === 'Square' && <Ionicons name="square-outline" size={24} color={params.color ? themeColorMap[params.color as ThemeColor] : '#f97316'} />}
+              {params.shape === 'Triangle' && <Ionicons name="triangle-outline" size={24} color={params.color ? themeColorMap[params.color as ThemeColor] : '#f97316'} />}
+              {params.shape === 'Star' && <Ionicons name="star-outline" size={24} color={params.color ? themeColorMap[params.color as ThemeColor] : '#f97316'} />}
+            </View>
+            <Text style={styles.summaryText}>{params.transcriptSummary}</Text>
+          </View>
+          <View style={styles.moodContainer}>
+            <Text style={styles.moodText}>{params.theme}</Text>
+            <Ionicons name="arrow-forward" size={16} color="#6B7280" />
+            <Text style={[styles.moodText, styles.moodHighlight]}>{params.sub_theme}</Text>
+          </View>
         </View>
 
         <View style={styles.insightCard}>
@@ -141,7 +185,7 @@ export default function InsightScreen() {
       </ScrollView>
 
       <View style={styles.finishContainer}>
-        <Pressable 
+        <Pressable
           style={styles.finishButton}
           onPress={handleFinish}
           disabled={isSaving}
@@ -261,5 +305,53 @@ const styles = StyleSheet.create({
   },
   finishIcon: {
     marginLeft: 4,
+  },
+  summaryCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 12,
+  },
+  summaryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryText: {
+    flex: 1,
+    fontFamily: fonts.manropeRegular,
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#374151',
+  },
+  moodContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 4,
+  },
+  moodText: {
+    fontFamily: fonts.manropeRegular,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  moodHighlight: {
+    color: '#FF3B30',
   },
 }); 

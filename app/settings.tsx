@@ -3,12 +3,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fonts } from '@/constants/fonts';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth.context';
 
 export default function SettingsScreen() {
+  const { signOut } = useAuth();
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.replace('/(auth)/sign-in');
+    try {
+      await signOut();
+      // Auth context will handle navigation
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    }
   };
 
   return (

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { streakService } from './streak.service';
 
 interface ReflectionInsight {
   insight: string;
@@ -61,6 +62,10 @@ export const reflectionService = {
         .single();
 
       if (entryError) throw entryError;
+
+      // Update streak
+      await streakService.updateStreak(session.user.id, new Date(entry.created_at));
+
       return entry;
     } catch (error) {
       console.error('Failed to create entry:', error);
@@ -138,6 +143,17 @@ export const reflectionService = {
       throw new Error('User must be authenticated to delete entries');
     }
 
+    // Get entry before deleting to get its date
+    const { data: entry } = await supabase
+      .from('journal_entries')
+      .select('created_at')
+      .eq('id', entryId)
+      .single();
+
+    if (!entry) {
+      throw new Error('Entry not found');
+    }
+
     // Begin transaction
     const { error: txnError } = await supabase.rpc('begin_transaction');
     if (txnError) throw txnError;
@@ -170,6 +186,9 @@ export const reflectionService = {
         await supabase.rpc('rollback_transaction');
         throw entryError;
       }
+
+      // Update streak
+      await streakService.deleteReflection(session.user.id, new Date(entry.created_at));
 
       // Commit transaction
       await supabase.rpc('commit_transaction');

@@ -5,8 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fonts } from '@/constants/fonts';
 import { JourneyStats } from '@/components/JourneyStats';
 import { reflectionService } from '@/services/reflection.service';
+import { streakService } from '@/services/streak.service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { supabase } from '@/lib/supabase';
 
 const PROMPTS = [
   {
@@ -70,28 +72,14 @@ export default function HomeScreen() {
 
   const checkReflections = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
       const entries = await reflectionService.getAllEntriesWithInsights();
       setHasReflections(entries.length > 0);
       
-      if (entries.length > 0) {
-        const today = new Date();
-        let currentStreak = 0;
-        let lastDate = today;
-
-        for (const entry of entries) {
-          const entryDate = new Date(entry.created_at);
-          const diffDays = Math.floor((lastDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          if (diffDays <= 1) {
-            currentStreak++;
-            lastDate = entryDate;
-          } else {
-            break;
-          }
-        }
-
-        setStreak(currentStreak);
-      }
+      const streakData = await streakService.getCurrentStreak(session.user.id);
+      setStreak(streakData?.current_streak || 0);
     } catch (error) {
       console.error('Failed to check reflections:', error);
     } finally {

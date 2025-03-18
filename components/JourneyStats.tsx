@@ -18,11 +18,11 @@ export function JourneyStats({ streak }: JourneyStatsProps) {
             <Text style={styles.streakSubtext}>Keep it up!</Text>
           </View>
         </View>
-        <Link href="/progress" asChild>
+        {/* <Link href="/progress" asChild>
           <Pressable style={styles.button}>
             <Text style={styles.buttonText}>View Progress</Text>
           </Pressable>
-        </Link>
+        </Link> */}
       </View>
     </View>
   );

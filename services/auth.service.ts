@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth.store';
 import { router } from 'expo-router';
+import { notificationService } from './notification.service';
 
 interface LoginCredentials {
   email: string;
@@ -91,8 +92,14 @@ export const authService = {
   },
 
   signOut: async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      await notificationService.cancelAllNotifications();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
   },
 
   // Get current session

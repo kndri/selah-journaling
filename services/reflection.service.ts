@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { streakService } from './streak.service';
 
 interface ReflectionInsight {
   insight: string;
@@ -8,62 +9,62 @@ interface ReflectionInsight {
   theme?: string;
 }
 
+interface ReflectionSummary {
+  highlight: string;
+  challenge: string;
+  goal: string;
+}
+
 interface CreateEntryDTO {
-  content: string;
-  insights: ReflectionInsight[];
+  title: string;
+  transcript: string;
+  transcript_summary: string;
+  highlight: string;
+  challenge: string;
+  goal: string;
+  scripture_verse?: string;
+  scripture_reference?: string;
+  explanation?: string;
+  theme: string;
+  sub_theme: string; 
+  color: string; 
+  shape: string;
 }
 
 export const reflectionService = {
-  async createEntryWithInsights({ content, insights }: CreateEntryDTO) {
+  async createEntryWithInsights(data: CreateEntryDTO) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         throw new Error('User must be authenticated to create entries');
       }
 
-      console.log('Creating entry with user_id:', session.user.id);
-
       // Create journal entry
       const { data: entry, error: entryError } = await supabase
         .from('journal_entries')
         .insert([{ 
-          content,
-          user_id: session.user.id
+          title: data.title,
+          transcript: data.transcript,
+          transcript_summary: data.transcript_summary,
+          highlight: data.highlight,
+          challenge: data.challenge,
+          goal: data.goal,
+          user_id: session.user.id,
+          scripture_verse: data.scripture_verse,
+          scripture_reference: data.scripture_reference,
+          explanation: data.explanation,
+          theme: data.theme,
+          sub_theme: data.sub_theme,
+          color: data.color,
+          shape: data.shape,
         }])
         .select()
         .single();
 
-      if (entryError) {
-        console.error('Entry creation error details:', entryError);
-        throw new Error(`Failed to create journal entry: ${entryError.message || 'Database error'}`);
-      }
+      if (entryError) throw entryError;
 
-      if (!entry) {
-        throw new Error('No entry returned after creation');
-      }
-
-      console.log('Entry created successfully:', entry.id);
-
-      // Map insights to match database structure
-      const mappedInsights = insights.map(insight => ({
-        entry_id: entry.id,
-        user_id: session.user.id,
-        insight: insight.insight,
-        scripture_verse: insight.scripture_verse,
-        scripture_reference: insight.scripture_reference,
-        explanation: insight.explanation,
-        theme: insight.theme
-      }));
-
-      // Insert insights
-      const { error: insightsError } = await supabase
-        .from('reflection_insights')
-        .insert(mappedInsights);
-
-      if (insightsError) {
-        console.error('Insights creation error details:', insightsError);
-        throw new Error(`Failed to create insights: ${insightsError.message || 'Database error'}`);
-      }
+      // Update streak
+      await streakService.updateStreak(session.user.id, new Date(entry.created_at));
 
       return entry;
     } catch (error) {
@@ -120,12 +121,37 @@ export const reflectionService = {
     return entry;
   },
 
+  async getEntryById(entryId: string) {
+    const { data: entry, error } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('id', entryId)
+      .single();
+
+    if (error) {
+      console.error('Failed to fetch entry:', error);
+      throw error;
+    }
+    return entry;
+  },
+
   async deleteEntry(entryId: string) {
     console.log('Starting delete operation for entry:', entryId);
     
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user?.id) {
       throw new Error('User must be authenticated to delete entries');
+    }
+
+    // Get entry before deleting to get its date
+    const { data: entry } = await supabase
+      .from('journal_entries')
+      .select('created_at')
+      .eq('id', entryId)
+      .single();
+
+    if (!entry) {
+      throw new Error('Entry not found');
     }
 
     // Begin transaction
@@ -160,6 +186,9 @@ export const reflectionService = {
         await supabase.rpc('rollback_transaction');
         throw entryError;
       }
+
+      // Update streak
+      await streakService.deleteReflection(session.user.id, new Date(entry.created_at));
 
       // Commit transaction
       await supabase.rpc('commit_transaction');

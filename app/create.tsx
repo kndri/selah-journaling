@@ -184,7 +184,7 @@ export default function CreateReflectionScreen() {
       // Wait for processing animation
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Check authentication first
+      // Check authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Please sign in to save reflections');
@@ -215,34 +215,29 @@ export default function CreateReflectionScreen() {
 
       console.log('Generating insights for text:', { textLength: fullText.length });
       
-      // Generate insights
+      // Generate insights with new format
       const insights = await aiService.generateInsights(fullText);
       console.log('Got insights:', insights);
 
-      if (!insights?.insights?.[0]) {
-        throw new Error('Failed to generate insights');
-      }
-
-      // Take the first insight and navigate
-      const firstInsight = insights.insights[0];
-      
       // Close the modal first
       router.back();
 
-      // Then navigate to insights screen
+      // Then navigate to insights screen with new data structure
       setTimeout(() => {
         router.push({
           pathname: '/insight',
           params: {
-            reflection: fullText,
-            insights: JSON.stringify({
-              insight: firstInsight.insight,
-              scripture: {
-                verse: firstInsight.scripture.verse,
-                reference: firstInsight.scripture.reference
-              },
-              reflection: firstInsight.explanation
-            })
+            title: insights.title,
+            transcriptSummary: insights.transcript_summary,
+            transcript: fullText,
+            highlight: insights.highlight,
+            challenge: insights.challenge,
+            goal: JSON.stringify(insights.goal),
+            scripture: JSON.stringify(insights.scripture),
+            theme: insights.theme,
+            sub_theme: insights.sub_theme,
+            color: insights.color,
+            shape: insights.shape
           }
         });
       }, 100);

@@ -5,20 +5,34 @@ import { Ionicons } from '@expo/vector-icons';
 import { fonts } from '@/constants/fonts';
 import { reflectionService } from '@/services/reflection.service';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Swipeable } from 'react-native-gesture-handler';
+import { SwipeableRow } from '@/components/SwipeableRow';
 
+type ThemeColor = 'Red' | 'Blue' | 'Green' | 'Purple';
+
+const themeColorMap: Record<ThemeColor, string> = {
+  Red: '#FF6B6B',    // A soft, warm red
+  Blue: '#4ECDC4',   // A calming teal-blue
+  Green: '#45B7A0',  // A soothing sage green
+  Purple: '#9D80CB', // A gentle lavender purple
+};
 
 interface ReflectionEntry {
   id: string;
-  content: string;
+  title: string; // Added title
+  content: string | null; // Updated to allow null
   created_at: string;
-  reflection_insights: Array<{
-    insight: string;
-    scripture_verse: string;
-    scripture_reference: string;
-    explanation: string;
-    theme?: string;
-  }>;
+  transcript: string; // Added transcript
+  transcript_summary: string; // Added transcript_summary
+  highlight: string; // Added highlight
+  goal: string; // Added goal
+  challenge: string; // Added challenge
+  scripture_verse: string; // Added scripture_verse
+  scripture_reference: string; // Added scripture_reference
+  explanation: string | null; // Updated to allow null
+  theme: string; // Added theme
+  sub_theme: string; // Added sub_theme
+  color: string; // Added color
+  shape: string; // Added shape
 }
 
 export default function ArchiveScreen() {
@@ -94,32 +108,10 @@ export default function ArchiveScreen() {
     );
   };
 
-  const renderRightActions = (item: ReflectionEntry, close: () => void) => {
-    return (
-      <View style={[styles.deleteActionContainer, { height: '100%' }]}>
-        <Pressable 
-          style={styles.deleteAction}
-          onPress={() => {
-            close();
-            handleDelete(item.id);
-          }}
-        >
-          <Ionicons name="trash-outline" size={24} color="#fff" />
-          <Text style={styles.deleteActionText}>Delete</Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   const renderReflectionItem = ({ item }: { item: ReflectionEntry }) => {
-    let swipeableRef: Swipeable | null = null;
-
+    console.log('reflection: ', item)
     return (
-      <Swipeable
-        ref={ref => swipeableRef = ref}
-        renderRightActions={() => renderRightActions(item, () => swipeableRef?.close())}
-        rightThreshold={40}
-      >
+      <SwipeableRow onDelete={() => handleDelete(item.id)}>
         <Pressable
           style={styles.reflectionCard}
           onPress={() => router.push({
@@ -130,7 +122,7 @@ export default function ArchiveScreen() {
           <View style={styles.reflectionHeader}>
             <View>
               <Text style={styles.reflectionTitle}>
-                {item.reflection_insights[0]?.insight || 'Untitled Reflection'}
+                {item.title || 'Untitled Reflection'}
               </Text>
               <Text style={styles.reflectionDate}>{formatDate(item.created_at)}</Text>
             </View>
@@ -138,15 +130,21 @@ export default function ArchiveScreen() {
               <Ionicons name="chevron-forward" size={16} color="#666" />
             </View>
           </View>
-          {item.reflection_insights[0]?.theme && (
-            <View style={styles.reflectionTag}>
-              <Text style={styles.reflectionTagText}>
-                {item.reflection_insights[0].theme}
+          <View style={{flexDirection: 'row', gap: 10, marginTop: 10}}>
+            <View style={[styles.reflectionTag, { backgroundColor: themeColorMap[item.color as ThemeColor] + '20' }]}>
+              <Text style={[styles.reflectionTagText, { color: themeColorMap[item.color as ThemeColor] }]}>
+                {item.theme}
               </Text>
             </View>
-          )}
+            <View style={[styles.reflectionTag, { backgroundColor: themeColorMap[item.color as ThemeColor] + '20' }]}>
+              <Text style={[styles.reflectionTagText, { color: themeColorMap[item.color as ThemeColor] }]}>
+                {item.sub_theme}
+              </Text>
+            </View>
+          </View>
+  
         </Pressable>
-      </Swipeable>
+      </SwipeableRow>
     );
   };
 
@@ -262,17 +260,13 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   reflectionTag: {
-    alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 16,
-    marginTop: 12,
-    backgroundColor: '#000',
+    borderRadius: 100,
   },
   reflectionTagText: {
     fontFamily: fonts.manropeMedium,
-    fontSize: 14,
-    color: '#fff',
+    fontSize: 12,
   },
   newButton: {
     position: 'absolute',

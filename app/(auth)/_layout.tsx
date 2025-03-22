@@ -1,32 +1,19 @@
-import React from 'react';
-import { Stack } from 'expo-router';
-import { useAuthStore } from '@/stores/auth.store';
-import { Redirect } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
+import { useAuth } from '@/contexts/auth.context';
 
 export default function AuthLayout() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { session, isLoading } = useAuth();
 
-  // Prevent accessing auth screens when authenticated
-  if (isAuthenticated) {
-    return <Redirect href="/(tabs)/home" />;
+  // Redirect to tabs if already authenticated
+  if (!isLoading && session) {
+    return <Redirect href="/(tabs)" />;
   }
 
   return (
-    <Stack 
-      screenOptions={{ 
-        headerShown: false,
-        animation: 'slide_from_right',
-      }}
-    >
-      <Stack.Screen 
-        name="welcome"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="forgot-password" />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="welcome" />
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="sign-up" />
     </Stack>
   );
 } 
